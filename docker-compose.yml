@@ -1,0 +1,74 @@
+version: "3.2"
+
+services:
+
+  app:
+    build:
+      context: ./docker/app
+    container_name: testapp
+    working_dir: /srv
+    environment:
+      IS_LOCAL_DOCKER: 1 # Used for app_dev.php security access control
+      LOCALBIN: /usr/local/bin
+      INKSCAPE: /usr/bin/inkscape
+      FIND: /usr/bin/find
+      OPTIPNG: /usr/bin/optipng
+      CONVERT: /usr/bin/convert
+    volumes:
+      - ./:/srv/
+
+  nginx:
+    image: nginx:1.10.2-alpine
+    container_name: testnginx
+    environment:
+      - VIRTUAL_HOST=local.storesys.com
+    volumes:
+       - ./:/srv
+       - files:/srv/var/files
+       - node_modules:/srv/node_modules
+       - vendor:/srv/vendor
+       - ./docker/nginx/vhost.conf:/etc/nginx/conf.d/default.conf:ro
+
+  node:
+    build:
+      context: ./docker/node
+    container_name: testnode
+    working_dir: /srv
+    volumes:
+      - ./:/srv/
+
+  seqgen:
+    build:
+      context: ./docker/seqgend
+    container_name: testseqgen
+
+  redis:
+    image: redis
+    container_name: testredis
+
+  mysql:
+    image: mysql:5.7
+    container_name: testmysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./fixtures:/home/fixtures
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    container_name: testmailcatcher
+    ports:
+        - "1080:1080"
+
+
+volumes:
+  files:
+    ~
+  node_modules:
+    ~
+  vendor:
+    ~
+  mysql_data:
+    ~
+
